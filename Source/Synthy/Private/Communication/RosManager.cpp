@@ -1,5 +1,76 @@
 #include "Communication/RosManager.h"
 
+void RosManager::SetupPublishers() {
+
+    if (!m_ROSInst->bIsConnected)
+        return;
+    m_Topic_ImuPub = NewObject<UTopic>(UTopic::StaticClass());
+
+    m_Topic_ImuPub->Init(m_ROSInst->ROSIntegrationCore, TEXT("/current_imu"), TEXT("sensor_msgs/Imu"));
+
+    m_Topic_ImuPub->Advertise();
+
+    m_Topic_JointStatePub = NewObject<UTopic>(UTopic::StaticClass());
+    m_Topic_JointStatePub->Init(m_ROSInst->ROSIntegrationCore, TEXT("/current_joint_state"), TEXT("sensor_msgs/JointState"));
+    m_Topic_JointStatePub->Advertise();
+
+    m_Topic_CameraPub = NewObject<UTopic>(UTopic::StaticClass());
+    m_Topic_CameraPub->Init(m_ROSInst->ROSIntegrationCore, TEXT("/current_image"), TEXT("sensor_msgs/Image"));
+    m_Topic_CameraPub->Advertise();
+
+    m_Topic_CameraDepthPub = NewObject<UTopic>(UTopic::StaticClass());
+    m_Topic_CameraDepthPub->Init(m_ROSInst->ROSIntegrationCore, TEXT("/current_depth"), TEXT("sensor_msgs/Image"));
+    m_Topic_CameraDepthPub->Advertise();
+
+    m_Topic_ContactsPub = NewObject<UTopic>(UTopic::StaticClass());
+    m_Topic_ContactsPub->Init(m_ROSInst->ROSIntegrationCore, TEXT("/current_foot_contacts"), TEXT("std_msgs/Float32MultiArray"));
+    m_Topic_ContactsPub->Advertise();
+}
+void RosManager::SetupRos(UGameInstance* GameInstance){
+
+
+
+    m_ROSInst = Cast<UROSIntegrationGameInstance>(GameInstance);
+    UE_LOG(LogTemp, Warning, TEXT("New ros server host is %s"), *m_ROSInst->ROSBridgeServerHost);
+    // ROSInst->bConnectToROS = true;
+    m_ROSInst->ConnectToRos();
+
+    if (!m_ROSInst->bIsConnected) {
+
+        UE_LOG(LogTemp, Warning, TEXT("ROS NOT CONNECTED"));
+        return;
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("ROS should be CONNECTED"));
+    SetupPublishers();
+    // SetupJointStateSub();
+    // SetupStartPosSub();
+    // SetupGoalPosSub();
+
+}
+
+void RosManager::Tick(){
+
+    TSharedPtr<ROSMessages::sensor_msgs::JointState> JointStateMsg = MakeShareable(new ROSMessages::sensor_msgs::JointState());
+    TSharedPtr<ROSMessages::sensor_msgs::Imu> ImuMsg = MakeShareable(new ROSMessages::sensor_msgs::Imu());
+    TSharedPtr<ROSMessages::std_msgs::Float32MultiArray> TouchForceMsg = MakeShareable(new ROSMessages::std_msgs::Float32MultiArray());
+    FROSTime RosTime;
+    ReadAllSensorDataRos(JointStateMsg, ImuMsg, TouchForceMsg, RosTime);
+    // PublishImu(ImuMsg, RosTime);
+    // PublishJointState(JointStateMsg, RosTime);
+    // PublishContacts(TouchForceMsg, RosTime);
+    //
+    // FTextureRenderTargetResource* RTResourceRGB = RenderTargetRGB->GameThread_GetRenderTargetResource();
+    // TArray<FColor> OutBMP;
+    // RTResourceRGB->ReadPixels(OutBMP);
+    // PublishCamera(OutBMP, 1024, 1024, RosTime);
+    //
+    // FTextureRenderTargetResource* RTResourceDepth = RenderTargetDepth->GameThread_GetRenderTargetResource();
+    // TArray<FFloat16Color> DepthData;
+    // RTResourceDepth->ReadFloat16Pixels(DepthData);
+    // PublishDepth(DepthData, 1024, 1024, RosTime);
+
+}
 void RosManager::ReadAllSensorDataRos(TSharedPtr<ROSMessages::sensor_msgs::JointState> JointStateMsg,
                                       TSharedPtr<ROSMessages::sensor_msgs::Imu> ImuMsg,
                                       TSharedPtr<ROSMessages::std_msgs::Float32MultiArray> TouchForceMsg, FROSTime& ROSTime) {
@@ -71,5 +142,5 @@ void RosManager::ReadAllSensorDataRos(TSharedPtr<ROSMessages::sensor_msgs::Joint
             }
         }
     }
-}
+
 }
