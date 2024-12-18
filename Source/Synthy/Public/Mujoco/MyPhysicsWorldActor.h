@@ -122,7 +122,10 @@ private:
     void ComputeMujocoUnrealSetup();
     void SubCallback_JointState(TSharedPtr<FROSBaseMsg> Msg);
 
+    void SetupCameras();
+
     void PublishJointState(TSharedPtr<ROSMessages::sensor_msgs::JointState> JointStateMsg, FROSTime RosTime);
+
     void PublishImu(TSharedPtr<ROSMessages::sensor_msgs::Imu> ImuMsg, FROSTime RosTime);
     void PublishContacts(TSharedPtr<ROSMessages::std_msgs::Float32MultiArray> Msg, FROSTime RosTime);
 

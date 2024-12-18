@@ -268,9 +268,7 @@ void AMyPhysicsWorldActor::SetupMJActors(TArray<AActor*> Actors, bool RobotPart,
     }
 }
 
-// Called when the game starts or when spawned
-void AMyPhysicsWorldActor::BeginPlay() {
-    Super::BeginPlay();
+void AMyPhysicsWorldActor::SetupCameras(){
 
     // setup cameras
     SceneCaptureComponent = NewObject<USceneCaptureComponent2D>(this, TEXT("SceneCaptureComponent"));
@@ -297,6 +295,12 @@ void AMyPhysicsWorldActor::BeginPlay() {
     RenderTargetDepth->InitAutoFormat(1024, 1024); // Set desired resolution
     SceneCaptureComponentDepth->CaptureSource = ESceneCaptureSource::SCS_SceneDepth;
     SceneCaptureComponentDepth->TextureTarget = RenderTargetDepth;
+
+}
+// Called when the game starts or when spawned
+void AMyPhysicsWorldActor::BeginPlay() {
+    Super::BeginPlay();
+
 
     UWorld* World = GetWorld();
 
