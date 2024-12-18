@@ -122,8 +122,9 @@ private:
     void ComputeMujocoUnrealSetup();
     void SubCallback_JointState(TSharedPtr<FROSBaseMsg> Msg);
 
+    UWorld* m_World;
     void SetupCameras();
-
+    MJHelper::HeightFieldData HandleLandscapes();
     void PublishJointState(TSharedPtr<ROSMessages::sensor_msgs::JointState> JointStateMsg, FROSTime RosTime);
 
     void PublishImu(TSharedPtr<ROSMessages::sensor_msgs::Imu> ImuMsg, FROSTime RosTime);
@@ -135,6 +136,7 @@ private:
 
     void SetupJointStateSub();
 
+    void RunMujocoAsync();
     void SubCallback_StartPos(TSharedPtr<FROSBaseMsg> Msg);
 
     void SetupStartPosSub();

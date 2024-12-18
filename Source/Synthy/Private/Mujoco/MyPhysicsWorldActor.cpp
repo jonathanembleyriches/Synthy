@@ -11,6 +11,7 @@
 #include "Chaos/Particle/ObjectState.h"
 #include "Chaos/TriangleMeshImplicitObject.h"
 #include "Chaos/Vector.h"
+#include "Coacd/CoacdInterface.h"
 #include "Components/ShapeComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Containers/StringConv.h"
@@ -22,15 +23,14 @@
 #include "Kismet/GameplayStatics.h"
 #include "Landscape.h" // Include this to work with ALandscape
 #include "Math/Float16Color.h"
-#include "Utils/XmlManager.h"
 #include "PhysicsEngine/BodySetup.h"
 #include "PhysicsEngine/ConvexElem.h"
 #include "Runtime/CinematicCamera/Public/CineCameraComponent.h"
 #include "Textures/TextureAtlas.h"
 #include "Utils/IO.h"
-#include <mujoco/mujoco.h>
-#include "Coacd/CoacdInterface.h"
+#include "Utils/XmlManager.h"
 #include "coacd.h"
+#include <mujoco/mujoco.h>
 // #include "../src/logger.h"
 // #include "../src/preprocess.h"
 // #include "../src/process.h"
@@ -268,7 +268,7 @@ void AMyPhysicsWorldActor::SetupMJActors(TArray<AActor*> Actors, bool RobotPart,
     }
 }
 
-void AMyPhysicsWorldActor::SetupCameras(){
+void AMyPhysicsWorldActor::SetupCameras() {
 
     // setup cameras
     SceneCaptureComponent = NewObject<USceneCaptureComponent2D>(this, TEXT("SceneCaptureComponent"));
@@ -295,107 +295,22 @@ void AMyPhysicsWorldActor::SetupCameras(){
     RenderTargetDepth->InitAutoFormat(1024, 1024); // Set desired resolution
     SceneCaptureComponentDepth->CaptureSource = ESceneCaptureSource::SCS_SceneDepth;
     SceneCaptureComponentDepth->TextureTarget = RenderTargetDepth;
-
 }
-// Called when the game starts or when spawned
-void AMyPhysicsWorldActor::BeginPlay() {
-    Super::BeginPlay();
 
+MJHelper::HeightFieldData AMyPhysicsWorldActor::HandleLandscapes() {
 
-    UWorld* World = GetWorld();
-
-    // TODO: here we are going to experiment with landscape
-    ALandscape* landscape = MeshUtils::FindLandscapeActor(World);
-    // MeshUtils::ExtractHeightmap(landscape);
+    ALandscape* landscape = MeshUtils::FindLandscapeActor(m_World);
     FString OutputPath = FPaths::ProjectSavedDir() / TEXT("HeightField.bin");
     FString OutputPathPng = FPaths::ProjectSavedDir() / TEXT("HeightField.png");
-    // MeshUtils::ExtractHeightmapAndSaveToMuJoCo(landscape, OutputPath);
-
     MJHelper::HeightFieldData heightFieldData =
-        MeshUtils::ExtractHeightmapAndSaveToMuJoCo(landscape, OutputPath, OutputPathPng, World);
-    // FName robotTag= FName(TEXT("ROBOT"));
-    // PhysicsStaticActors1 = GetAllActorsWithTag(World,robotTag);
-    // PhysicsStaticActors1 = ConvertComponentsToActors(PhysicsStaticActors1[0], GetWorld());
-    // SetupMJActors(PhysicsStaticActors1, false);
+        MeshUtils::ExtractHeightmapAndSaveToMuJoCo(landscape, OutputPath, OutputPathPng, m_World);
+    return heightFieldData;
 
-    FName staticTag = FName(TEXT("EP_STATIC"));
-    FName staticComplexTag = FName(TEXT("EP_STATIC_COMPLEX"));
-    FName dynamicTag = FName(TEXT("EP_DYNAMIC"));
-    FName robotTag = FName(TEXT("ROBOT"));
-    FName dynamicComplexTag = FName(TEXT("EP_DYNAMIC_COMPLEX"));
+}
 
-    PhysicsStaticActors1 = GetAllActorsWithTag(World, staticTag);
-    SetupMJActors(PhysicsStaticActors1, false, false, true);
+void AMyPhysicsWorldActor::RunMujocoAsync(){
 
-    PhysicsStaticActors1 = GetAllActorsWithTag(World, staticComplexTag);
-    SetupMJActors(PhysicsStaticActors1, false, true, true);
 
-    PhysicsDynamicActors1 = GetAllActorsWithTag(World, robotTag);
-    SetupMJActors(PhysicsDynamicActors1, true, false, false);
-
-    PhysicsDynamicActors1 = GetAllActorsWithTag(World, dynamicTag);
-    SetupMJActors(PhysicsDynamicActors1, false, false, false);
-
-    PhysicsDynamicActors1 = GetAllActorsWithTag(World, dynamicComplexTag);
-    SetupMJActors(PhysicsDynamicActors1, false, true, false);
-
-    XmlManager x;
-    char error[1000] = "Could not load binary model";
-    model = new mjModel();
-
-    // FString fp = FString::Printf(TEXT("%shello.xml"), *FPaths::ProjectSavedDir());
-    FString fp;
-    if (bRecreateMujoco) {
-
-        fp = FString::Printf(TEXT("%shello.xml"), *FPaths::ProjectSavedDir());
-
-        x.UpdateXML(m_mjPhysicsObjects, heightFieldData);
-    } else {
-
-        fp = FString::Printf(TEXT("%shello_mod.xml"), *FPaths::ProjectSavedDir());
-    }
-    // fp = FPaths::ConvertRelativePathToFull(fp);
-    // x.UpdateXML(m_mjPhysicsObjects, heightFieldData);
-
-    fp = FString::Printf(TEXT("%shello_mod.xml"), *FPaths::ProjectSavedDir());
-    fp = FPaths::ConvertRelativePathToFull(fp);
-    const char* ConvertedString = TCHAR_TO_ANSI(*fp);
-
-    model = mj_loadXML(ConvertedString, 0, error, 1000);
-    data = mj_makeData(model);
-
-    mj_step(model, data);
-    ComputeMujocoUnrealSetup();
-
-    // SetupJointAddresses();
-    SetupActuatorAddresses();
-    SetupRobotMJtoUE();
-    SetupRos("");
-    DrawAllBodiesDebug();
-
-    for (int geomId = 0; geomId < model->ngeom; ++geomId) {
-        int bodyId = model->geom_bodyid[geomId];
-
-        const char* geomName = mj_id2name(model, mjOBJ_GEOM, geomId);
-
-        FString s = UTF8_TO_TCHAR(geomName);
-
-        int32 SubIndex = s.Find(TEXT("_sub_"), ESearchCase::IgnoreCase, ESearchDir::FromStart);
-
-        // If "_sub_" is found, extract the substring before it
-        if (SubIndex != INDEX_NONE) {
-            s = s.Left(SubIndex);
-        }
-        PhysicsObject* p = m_NameToPhysicsObject.Find(s);
-        if (p != nullptr && !p->Static) {
-
-            if (!m_MJDynamicToPhysicsObject.Contains(geomId)) {
-                m_MJDynamicToPhysicsObject.Add(geomId, p);
-            } else {
-                m_MJDynamicToPhysicsObject[geomId] = p;
-            }
-        }
-    }
     float IntervalInSeconds = 0.002;
     Async(EAsyncExecution::Thread, [IntervalInSeconds, this]() {
         while (true) // Keep running until manually stopped or object destroyed
@@ -426,6 +341,86 @@ void AMyPhysicsWorldActor::BeginPlay() {
             }
         }
     });
+
+}
+// Called when the game starts or when spawned
+void AMyPhysicsWorldActor::BeginPlay() {
+    Super::BeginPlay();
+
+    UWorld* World = GetWorld();
+    m_World = World;
+
+    MJHelper::HeightFieldData heightFieldData =HandleLandscapes();
+
+    FName staticTag = FName(TEXT("EP_STATIC"));
+    FName staticComplexTag = FName(TEXT("EP_STATIC_COMPLEX"));
+    FName dynamicTag = FName(TEXT("EP_DYNAMIC"));
+    FName dynamicComplexTag = FName(TEXT("EP_DYNAMIC_COMPLEX"));
+    FName robotTag = FName(TEXT("ROBOT"));
+
+    PhysicsStaticActors1 = GetAllActorsWithTag(World, staticTag);
+    SetupMJActors(PhysicsStaticActors1, false, false, true);
+    PhysicsStaticActors1 = GetAllActorsWithTag(World, staticComplexTag);
+    SetupMJActors(PhysicsStaticActors1, false, true, true);
+    PhysicsDynamicActors1 = GetAllActorsWithTag(World, robotTag);
+    SetupMJActors(PhysicsDynamicActors1, true, false, false);
+    PhysicsDynamicActors1 = GetAllActorsWithTag(World, dynamicTag);
+    SetupMJActors(PhysicsDynamicActors1, false, false, false);
+    PhysicsDynamicActors1 = GetAllActorsWithTag(World, dynamicComplexTag);
+    SetupMJActors(PhysicsDynamicActors1, false, true, false);
+
+    XmlManager x;
+    char error[1000] = "Could not load binary model";
+    model = new mjModel();
+
+    FString fp;
+    if (bRecreateMujoco) {
+
+        fp = FString::Printf(TEXT("%shello.xml"), *FPaths::ProjectSavedDir());
+        x.UpdateXML(m_mjPhysicsObjects, heightFieldData);
+    } else {
+
+        fp = FString::Printf(TEXT("%shello_mod.xml"), *FPaths::ProjectSavedDir());
+    }
+
+    fp = FString::Printf(TEXT("%shello_mod.xml"), *FPaths::ProjectSavedDir());
+    fp = FPaths::ConvertRelativePathToFull(fp);
+    const char* ConvertedString = TCHAR_TO_ANSI(*fp);
+
+    model = mj_loadXML(ConvertedString, 0, error, 1000);
+    data = mj_makeData(model);
+
+    mj_step(model, data);
+    ComputeMujocoUnrealSetup();
+    SetupActuatorAddresses();
+    SetupRobotMJtoUE();
+    SetupRos("");
+    DrawAllBodiesDebug();
+
+    for (int geomId = 0; geomId < model->ngeom; ++geomId) {
+        int bodyId = model->geom_bodyid[geomId];
+
+        const char* geomName = mj_id2name(model, mjOBJ_GEOM, geomId);
+
+        FString s = UTF8_TO_TCHAR(geomName);
+
+        int32 SubIndex = s.Find(TEXT("_sub_"), ESearchCase::IgnoreCase, ESearchDir::FromStart);
+
+        // If "_sub_" is found, extract the substring before it
+        if (SubIndex != INDEX_NONE) {
+            s = s.Left(SubIndex);
+        }
+        PhysicsObject* p = m_NameToPhysicsObject.Find(s);
+        if (p != nullptr && !p->Static) {
+
+            if (!m_MJDynamicToPhysicsObject.Contains(geomId)) {
+                m_MJDynamicToPhysicsObject.Add(geomId, p);
+            } else {
+                m_MJDynamicToPhysicsObject[geomId] = p;
+            }
+        }
+    }
+    RunMujocoAsync();
     TArray<AActor*> actors = GetAllActorsWithTag(GetWorld(), "camera");
     if (actors.Num() > 0) {
 
