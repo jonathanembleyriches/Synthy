@@ -71,3 +71,5 @@ void RosManager::ReadAllSensorDataRos(TSharedPtr<ROSMessages::sensor_msgs::Joint
             }
         }
     }
+}
+}

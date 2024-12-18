@@ -18,6 +18,7 @@
 class RosManager {
 
 public:
+mjModel* model; mjData* data;
     RosManager(mjModel* model, mjData* data);
 
     void ReadAllSensorDataRos(TSharedPtr<ROSMessages::sensor_msgs::JointState> JointStateMsg,
