@@ -1,8 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-using UnrealBuildTool;
-
 using System;
+using UnrealBuildTool;
 using System.IO;
 public
 class Synthy : ModuleRules {
@@ -27,7 +26,7 @@ public
         PrivateDependencyModuleNames.AddRange(new string[]{
             "CoreUObject", "Engine", "Slate", "SlateCore", "CinematicCamera", "ImageWrapper",
             //"UnrealEd",
-            "PhysicsCore", "Chaos", "XmlParser", "ROSIntegration", "CoACDInterface",  "Landscape"
+            "PhysicsCore", "Chaos", "XmlParser", "ROSIntegration", "CoACDInterface", "Landscape"
             // ... add private dependencies that you statically link with here ...
         });
 
@@ -38,6 +37,7 @@ public
         // AddBullet();
         AddMuj();
         AddCoACD();
+        AddZeroMQ();
     }
 
 private
@@ -48,37 +48,28 @@ private
     }
 
 protected
-    void AddBullet() {
-        // This is real basic, only for a single platform & config (Win64)
-        // If you build for more variants you'll have to do some more work here
+    void AddZeroMQ() {
+        // Base paths
+        string PluginBasePath = ModuleDirectory;
+        // string ThirdPartyPath = Path.GetFullPath(Path.Combine(PluginBasePath, "..", "..", "ThirdParty", "zmq"));
 
-        bool bDebug =
-            Target.Configuration == UnrealTargetConfiguration.Debug || Target.Configuration == UnrealTargetConfiguration.DebugGame;
-        bool bDevelopment = Target.Configuration == UnrealTargetConfiguration.Development;
+        // Include, library, and binary paths
+        string ZmqIncludePath = Path.Combine(ThirdPartyPath, "zmq", "include");
+        string ZmqLibPath = Path.Combine(ThirdPartyPath, "zmq", "lib");
+        string ZmqBinPath = Path.Combine(ThirdPartyPath, "zmq", "bin");
 
-        string BuildFolder = bDebug ? "Debug" : bDevelopment ? "Debug" : "Release";
-        string BuildSuffix = bDebug ? "_Debug" : bDevelopment ? "_Debug" : "";
-
-        // Library path
-        string LibrariesPath = Path.Combine(ThirdPartyPath, "lib", "bullet", BuildFolder);
-        // PublicAdditionalLibraries.Add(Path.Combine(LibrariesPath, "BulletCollision" + BuildSuffix + ".lib"));
-
-        // PublicAdditionalLibraries.Add(Path.Combine(LibrariesPath, "BulletDynamics" + BuildSuffix + ".lib"));
-        // PublicAdditionalLibraries.Add(Path.Combine(LibrariesPath, "LinearMath" + BuildSuffix + ".lib"));
-
-        // string LibrariesPath = Path.Combine(ThirdPartyPath, "lib", "mujoco", BuildFolder);
-        foreach (string LibFile in Directory.GetFiles(LibrariesPath, "*.lib")) {
-            if (LibFile.Contains("Bullet2FileLoader"))
-                continue;
+        foreach (string LibFile in Directory.GetFiles(ZmqLibPath, "*.lib")) {
             PublicAdditionalLibraries.Add(LibFile);
         }
 
         // Include path (I'm just using the source here since Bullet has mixed src & headers)
-        PublicIncludePaths.Add(Path.Combine(ThirdPartyPath, "bullet3", "src"));
-        PublicIncludePaths.Add(Path.Combine(ThirdPartyPath, "bullet3", "Extras", "BulletRobotics"));
-        PublicIncludePaths.Add(Path.Combine(ThirdPartyPath, "bullet3", "examples"));
-        // PublicIncludePaths.Add( Path.Combine( ThirdPartyPath, "bullet3") );
-        PublicDefinitions.Add("WITH_BULLET_BINDING=1");
+
+        PublicIncludePaths.Add(ZmqIncludePath);
+
+        PublicDelayLoadDLLs.Add("libzmq-mt-4_3_5.dll"); // Delay load the DLL
+        // Ensure the DLL is packaged
+        RuntimeDependencies.Add(Path.Combine(ZmqBinPath, "libzmq-mt-4_3_5.dll"));
+
     }
 
 protected

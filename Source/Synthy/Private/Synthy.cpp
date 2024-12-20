@@ -17,6 +17,15 @@ void FSynthyModule::StartupModule()
 		UE_LOG(LogTemp, Error, TEXT("Failed to load mujoco.dll from path: %s"), *MujocoDLLPath);
 		return;  // Exit early or handle the error
 	}
+
+	FString ZmqDllPath = FPaths::Combine(FPaths::ProjectDir(), TEXT("ThirdParty/zmq/bin/libzmq-mt-4_3_5.dll"));
+	void* ZmqHandle= FPlatformProcess::GetDllHandle(*ZmqDllPath);
+
+	if (!ZmqHandle)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to load zmq,,,.dll from path: %s"), *ZmqDllPath);
+		return;  // Exit early or handle the error
+	}
 }
 
 void FSynthyModule::ShutdownModule()

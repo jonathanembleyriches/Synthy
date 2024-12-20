@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Descr
 
+#include "Mujoco/MyPhysicsWorldActor.h"
 #include "AI/Navigation/NavCollisionBase.h"
 #include "Animation/AnimSequenceHelpers.h"
-#include "Mujoco/MyPhysicsWorldActor.h"
 #include "Async/Async.h"
 #include "Chaos/ArrayCollection.h"
 #include "Chaos/ArrayCollectionArray.h"
@@ -29,6 +29,7 @@
 #include "Utils/IO.h"
 #include "Utils/XmlManager.h"
 #include "coacd.h"
+#include "zmq.hpp"
 #include <mujoco/mujoco.h>
 // #include "../src/logger.h"
 // #include "../src/preprocess.h"
@@ -304,11 +305,9 @@ MJHelper::HeightFieldData AMyPhysicsWorldActor::HandleLandscapes() {
     MJHelper::HeightFieldData heightFieldData =
         MeshUtils::ExtractHeightmapAndSaveToMuJoCo(landscape, OutputPath, OutputPathPng, m_World);
     return heightFieldData;
-
 }
 
-void AMyPhysicsWorldActor::RunMujocoAsync(){
-
+void AMyPhysicsWorldActor::RunMujocoAsync() {
 
     float IntervalInSeconds = 0.002;
     Async(EAsyncExecution::Thread, [IntervalInSeconds, this]() {
@@ -340,7 +339,6 @@ void AMyPhysicsWorldActor::RunMujocoAsync(){
             }
         }
     });
-
 }
 // Called when the game starts or when spawned
 void AMyPhysicsWorldActor::BeginPlay() {
@@ -349,7 +347,7 @@ void AMyPhysicsWorldActor::BeginPlay() {
     UWorld* World = GetWorld();
     m_World = World;
 
-    MJHelper::HeightFieldData heightFieldData =HandleLandscapes();
+    MJHelper::HeightFieldData heightFieldData = HandleLandscapes();
 
     FName staticTag = FName(TEXT("EP_STATIC"));
     FName staticComplexTag = FName(TEXT("EP_STATIC_COMPLEX"));
@@ -435,6 +433,12 @@ void AMyPhysicsWorldActor::BeginPlay() {
     if (GoalActors.Num() > 0) {
         m_GoalActor = GoalActors[0];
     }
+
+    // INFO: Testing of zmq
+    // zmq::context_t context;
+    // zmq::socket_t socket(context, zmq::socket_type::push);
+    // socket.bind("tcp://127.0.0.1:5555");
+    // socket.send(zmq::str_buffer("Hello, Unreal!"), zmq::send_flags::none);
 }
 void AMyPhysicsWorldActor::StopMJ() {
     bShouldStopTask = true;
