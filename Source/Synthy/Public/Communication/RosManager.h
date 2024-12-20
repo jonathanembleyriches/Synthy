@@ -21,6 +21,8 @@ public:
     mjModel* model;
     mjData* data;
 
+    TMap<FString, float>* m_ActuatorValues;
+
     UTopic* m_Topic_JointStateSub;
 
     UTopic* m_Topic_JointStatePub;
@@ -37,7 +39,7 @@ public:
 
     UTopic* m_Topic_ContactsPub;
     class UROSIntegrationGameInstance* m_ROSInst;
-    RosManager(mjModel* model, mjData* data);
+    RosManager( mjModel* model,mjData* data, TMap<FString, float>* ActuatorValues);
 
     void SetupPublishers();
 
@@ -46,6 +48,19 @@ public:
                               TSharedPtr<ROSMessages::std_msgs::Float32MultiArray> TouchForceMsg, FROSTime& ROSTime);
 
     void SetupRos(UGameInstance* GameInstance);
-    void Tick();
+    void Publish();
+
+    void PublishJointState(TSharedPtr<ROSMessages::sensor_msgs::JointState> JointStateMsg, FROSTime RosTime);
+
+    void PublishImu(TSharedPtr<ROSMessages::sensor_msgs::Imu> ImuMsg, FROSTime RosTime);
+    void PublishContacts(TSharedPtr<ROSMessages::std_msgs::Float32MultiArray> Msg, FROSTime RosTime);
+
+    void PublishCamera(const TArray<FColor>& OutBMP, uint32 Width, uint32 Height, FROSTime RosTime);
+
+    void PublishDepth(const TArray<FFloat16Color>& DepthData, uint32 Width, uint32 Height, FROSTime RosTime);
+
+    void SetupJointStateSub();
+
+    void SubCallback_JointState(TSharedPtr<FROSBaseMsg> Msg);
 
 }; // namespace RosManager

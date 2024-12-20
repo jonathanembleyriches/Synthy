@@ -5,6 +5,7 @@
 #include <functional>
 
 
+#include "Communication/RosManager.h"
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include <mujoco/mujoco.h>
@@ -108,8 +109,6 @@ public:
     TMap<int, PhysicsObject*> m_MJRobotVisToPhysicsObject;
     TMap<int, PhysicsObject*> m_MJDynamicToPhysicsObject;
 
-    UFUNCTION(BlueprintCallable, Category = "ROS")
-    void SetupRos(FString Addr);
 
 protected:
     // Called when the game starts or when spawned
@@ -120,34 +119,38 @@ protected:
 private:
     void StopMJ();
     void ComputeMujocoUnrealSetup();
-    void SubCallback_JointState(TSharedPtr<FROSBaseMsg> Msg);
 
     UWorld* m_World;
     void SetupCameras();
     MJHelper::HeightFieldData HandleLandscapes();
-    void PublishJointState(TSharedPtr<ROSMessages::sensor_msgs::JointState> JointStateMsg, FROSTime RosTime);
 
-    void PublishImu(TSharedPtr<ROSMessages::sensor_msgs::Imu> ImuMsg, FROSTime RosTime);
-    void PublishContacts(TSharedPtr<ROSMessages::std_msgs::Float32MultiArray> Msg, FROSTime RosTime);
+    // void SubCallback_JointState(TSharedPtr<FROSBaseMsg> Msg);
+    // void PublishJointState(TSharedPtr<ROSMessages::sensor_msgs::JointState> JointStateMsg, FROSTime RosTime);
+    // void PublishImu(TSharedPtr<ROSMessages::sensor_msgs::Imu> ImuMsg, FROSTime RosTime);
+    // void PublishContacts(TSharedPtr<ROSMessages::std_msgs::Float32MultiArray> Msg, FROSTime RosTime);
+    // void PublishCamera(const TArray<FColor>& OutBMP, uint32 Width, uint32 Height, FROSTime RosTime);
+    // void PublishDepth(const TArray<FFloat16Color>& DepthData, uint32 Width, uint32 Height, FROSTime RosTime);
+    // void SetupJointStateSub();
+    // void SetupGoalPosSub();
+    // void SetupPublishers();
+    // void SubCallback_StartPos(TSharedPtr<FROSBaseMsg> Msg);
+    // void SubCallback_GoalPos(TSharedPtr<FROSBaseMsg> Msg);
+    // void ReadAllSensorDataRos(TSharedPtr<ROSMessages::sensor_msgs::JointState> JointStateMsg,
+    //                           TSharedPtr<ROSMessages::sensor_msgs::Imu> ImuMsg,
+    //                           TSharedPtr<ROSMessages::std_msgs::Float32MultiArray> TouchForceMsg, FROSTime& ROSTime);
+    // void SetupStartPosSub();
+    //
+    // UFUNCTION(BlueprintCallable, Category = "ROS")
+    // void SetupRos(FString Addr);
 
-    void PublishCamera(const TArray<FColor>& OutBMP, uint32 Width, uint32 Height, FROSTime RosTime);
 
-    void PublishDepth(const TArray<FFloat16Color>& DepthData, uint32 Width, uint32 Height, FROSTime RosTime);
 
-    void SetupJointStateSub();
 
     void RunMujocoAsync();
-    void SubCallback_StartPos(TSharedPtr<FROSBaseMsg> Msg);
 
-    void SetupStartPosSub();
     void DrawAllBodiesDebug();
     void SyncDynamic();
 
-    void SubCallback_GoalPos(TSharedPtr<FROSBaseMsg> Msg);
-
-    void SetupGoalPosSub();
-
-    void SetupPublishers();
 
     void SetupActuatorAddresses();
 
@@ -155,72 +158,46 @@ private:
 
     void SetupRobotMJtoUE();
 
-    void ReadAllSensorDataRos(TSharedPtr<ROSMessages::sensor_msgs::JointState> JointStateMsg,
-                              TSharedPtr<ROSMessages::sensor_msgs::Imu> ImuMsg,
-                              TSharedPtr<ROSMessages::std_msgs::Float32MultiArray> TouchForceMsg, FROSTime& ROSTime);
 
     void SyncMujBodyToUnreal(int body_id, PhysicsObject* p);
 
     void SetupMJActors(TArray<AActor*> Actors, bool RobotPart, bool ComplexMeshRequired, bool Static);
 
-    // void DecomposeMesh(FString ObjFileName) {
-    //     coacd::Params params;
-    //     coacd::Model coacdModel;
-    //     const std::string StandardString = TCHAR_TO_UTF8(*ObjFileName);
-    //     coacdModel.LoadOBJ(StandardString);
-    //
-    //     array<array<double, 3>, 3> rot;
-    //     vector<double> bbox = coacdModel.Normalize();
-    //     bool is_manifold = coacd::IsManifold(coacdModel);
-    //     if (!is_manifold) {
-    //         exit(0);
-    //     }
-    //     coacdModel.SaveOBJ(StandardString);
-    //
-    //     rot = coacdModel.PCA();
-    //
-    //     vector<coacd::Model> parts = coacd::Compute(coacdModel, params);
-    //
-    //     coacd::RecoverParts(parts, bbox, rot, params);
-    //
-    //     string objName = regex_replace(params.output_name, std::regex("wrl"), "obj");
-    //     string wrlName = regex_replace(params.output_name, std::regex("obj"), "wrl");
-    //
-    //     coacd::SaveVRML(wrlName, parts, params);
-    //     coacd::SaveOBJ(objName, parts, params);
-    // }
 
 private: // ROS
     //
-    UPROPERTY()
-    class UROSIntegrationGameInstance* ROSInst;
-
-    UPROPERTY()
-    UTopic* m_Topic_JointStateSub;
-
-    UPROPERTY()
-    UTopic* m_Topic_JointStatePub;
-
-    UPROPERTY()
-    UTopic* m_Topic_ImuPub;
-
-    UPROPERTY()
-    UTopic* m_Topic_CameraPub;
-
-    UPROPERTY()
-    UTopic* m_Topic_CameraDepthPub;
-
-    UPROPERTY()
-    UTopic* m_Topic_StartPosSub;
-
-    UPROPERTY()
-    UTopic* m_Topic_GoalPosSub;
-
-    UPROPERTY()
-    UTopic* m_Topic_ContactsPub;
+    // UPROPERTY()
+    // class UROSIntegrationGameInstance* ROSInst;
+    //
+    // UPROPERTY()
+    // UTopic* m_Topic_JointStateSub;
+    //
+    // UPROPERTY()
+    // UTopic* m_Topic_JointStatePub;
+    //
+    // UPROPERTY()
+    // UTopic* m_Topic_ImuPub;
+    //
+    // UPROPERTY()
+    // UTopic* m_Topic_CameraPub;
+    //
+    // UPROPERTY()
+    // UTopic* m_Topic_CameraDepthPub;
+    //
+    // UPROPERTY()
+    // UTopic* m_Topic_StartPosSub;
+    //
+    // UPROPERTY()
+    // UTopic* m_Topic_GoalPosSub;
+    //
+    // UPROPERTY()
+    // UTopic* m_Topic_ContactsPub;
 
 
 private: // UE
+    //
+    RosManager* m_RosManager;
+
     UPROPERTY()
     USceneCaptureComponent2D* SceneCaptureComponent;
 
