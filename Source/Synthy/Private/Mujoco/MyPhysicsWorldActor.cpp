@@ -820,10 +820,10 @@ void AMyPhysicsWorldActor::Tick(float DeltaTime) {
 
 void AMyPhysicsWorldActor::BeginDestroy() {
     Super::BeginDestroy();
-    if (m_RosManager != nullptr) {
-        delete m_RosManager;
-        m_RosManager = nullptr; // Prevent dangling pointer
-    }
+    // if (m_RosManager != nullptr) {
+    //     delete m_RosManager;
+    //     m_RosManager = nullptr; // Prevent dangling pointer
+    // }
 }
 
 void AMyPhysicsWorldActor::SetupActuatorAddresses() {
