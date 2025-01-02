@@ -846,19 +846,46 @@ void AMyPhysicsWorldActor::SetupActuatorAddresses() {
         const char* actuator_name = mj_id2name(model, mjOBJ_ACTUATOR, i);
         int ac_addr = model->actuator_actadr[i];
 
-        // The control values are stored in the 'ctrl' array in mjData
-        // Store the actuator name and its control index in the map
+        // Find the joint associated with the actuator
+        int jointId = model->actuator_trnid[2 * i]; // First transmission ID
+        if (jointId < 0) {
+            UE_LOG(LogTemp, Warning, TEXT("Actuator %s has no associated joint."), *FString(actuator_name));
+            continue;
+        }
 
-        FString MjName(actuator_name);
-        UE_LOG(LogTemp, Warning, TEXT("setting up actuator %s to id %i"), *MjName, ac_addr);
-        m_ActuatorAddressesMap.Add(FString(actuator_name), i);
-        m_ActuatorValues.Add(FString(actuator_name), 0.0f); // Initialize actuator control values to 0
+        // Find the body associated with the joint
+        int bodyId = model->jnt_bodyid[jointId];
+
+        // Trace up to the highest parent body
+        while (model->body_parentid[bodyId] != 0) { // Stop at the world body (id = 0)
+            bodyId = model->body_parentid[bodyId];
+        }
+
+        // Get the highest parent body name
+        const char* parent_body_name = mj_id2name(model, mjOBJ_BODY, bodyId);
+
+        // Combine the highest parent body name with the actuator name
+        FString CombinedName = FString(parent_body_name) + "/" + FString(actuator_name);
+
+        // Log and store the combined name with its control index
+        UE_LOG(LogTemp, Warning, TEXT("Setting up actuator %s to id %i"), *CombinedName, ac_addr);
+        m_ActuatorAddressesMap.Add(CombinedName, i);
+        m_ActuatorValues.Add(CombinedName, 0.0f); // Initialize actuator control values to 0
     }
 }
-void AMyPhysicsWorldActor::UpdateActuatorValuesFromKeyframe( const FString& keyframeName) {
+
+
+void AMyPhysicsWorldActor::UpdateActuatorValuesFromKeyframe(const FString& keyframeName) {
     // Check for a valid model
     if (!model) {
         UE_LOG(LogTemp, Error, TEXT("MuJoCo model is null."));
+        return;
+    }
+
+    // Extract the robot name from the keyframe name
+    FString RobotName, KeyframeSuffix;
+    if (!keyframeName.Split(TEXT("_"), &RobotName, &KeyframeSuffix)) {
+        UE_LOG(LogTemp, Error, TEXT("Invalid keyframe name format: '%s'. Expected 'robotname_suffix'."), *keyframeName);
         return;
     }
 
@@ -878,30 +905,57 @@ void AMyPhysicsWorldActor::UpdateActuatorValuesFromKeyframe( const FString& keyf
 
     // Update the map with keyframe `ctrl` values
     for (int i = 0; i < model->nu; i++) {
-        FString actuatorName = FString(model->names + model->name_actuatoradr[i]);
+        // Get the actuator name
+        const char* actuator_name = model->names + model->name_actuatoradr[i];
+
+        // Find the joint associated with the actuator
+        int jointId = model->actuator_trnid[2 * i]; // First transmission ID
+        if (jointId < 0) {
+            UE_LOG(LogTemp, Warning, TEXT("Actuator %s has no associated joint."), *FString(actuator_name));
+            continue;
+        }
+
+        // Find the body associated with the joint
+        int bodyId = model->jnt_bodyid[jointId];
+
+        // Trace up to the highest parent body
+        while (model->body_parentid[bodyId] != 0) { // Stop at the world body (id = 0)
+            bodyId = model->body_parentid[bodyId];
+        }
+
+        // Get the highest parent body name
+        const char* parent_body_name = mj_id2name(model, mjOBJ_BODY, bodyId);
+
+        // Combine the parent body name and actuator name
+        FString CombinedName = FString(parent_body_name) + "/" + FString(actuator_name);
+
+        // Ensure the actuator belongs to the robot specified in the keyframe
+        if (!CombinedName.StartsWith(RobotName + TEXT("/"))) {
+            continue; // Skip actuators that don't match the robot name
+        }
 
         // Check if the actuator exists in the map
-        if (m_ActuatorValues.Contains(actuatorName)) {
+        if (m_ActuatorValues.Contains(CombinedName)) {
             // Update the value in the map
-            m_ActuatorValues[actuatorName] = static_cast<float>(ctrl[i]);
+            m_ActuatorValues[CombinedName] = static_cast<float>(ctrl[i]);
 
             // Log the updated value
-            UE_LOG(LogTemp, Log, TEXT("Updated Actuator: %s -> Ctrl Value: %f"), *actuatorName, ctrl[i]);
+            UE_LOG(LogTemp, Log, TEXT("Updated Actuator: %s -> Ctrl Value: %f"), *CombinedName, ctrl[i]);
         } else {
             // Log a warning if the actuator is not found in the map
-            UE_LOG(LogTemp, Warning, TEXT("Actuator '%s' not found in the map."), *actuatorName);
+            UE_LOG(LogTemp, Warning, TEXT("Actuator '%s' not found in the map."), *CombinedName);
         }
     }
 }
+
 void AMyPhysicsWorldActor::SetupRobotMJtoUE() {
 
     UWorld* World = GetWorld();
 
     TArray<AActor*> FoundActors;
-    AActor* RobotActorr = nullptr;
     UGameplayStatics::GetAllActorsWithTag(World, FName("ROBOT"), FoundActors);
 
-    int keyframe_index = find_keyframe_index(model, "home");
+    /*int keyframe_index = find_keyframe_index(model, "home");
     UE_LOG(LogTemp, Warning, TEXT("Keyframe id found %i"), keyframe_index)
     const mjtNum* ctrl = model->key_ctrl + keyframe_index * model->nu;
     if (model->nu > 0) {
@@ -910,11 +964,20 @@ void AMyPhysicsWorldActor::SetupRobotMJtoUE() {
             UE_LOG(LogTemp, Warning, TEXT("ctrl values for ^ %f"), ctrl[i])
         }
     }
-        UpdateActuatorValuesFromKeyframe( "home");
+        UpdateActuatorValuesFromKeyframe("home");
+        */
+    for (int keyframeIndex = 0; keyframeIndex < model->nkey; keyframeIndex++) {
+        // Get the keyframe name
+        const char* keyframeName = model->names + model->name_keyadr[keyframeIndex];
+        FString KeyframeNameFString(keyframeName);
 
-    if (FoundActors.Num() > 0)
-        RobotActorr = FoundActors[0];
-    if (!RobotActorr)
+        // Log the keyframe name
+        UE_LOG(LogTemp, Log, TEXT("Keyframe found: %s (Index: %d)"), *KeyframeNameFString, keyframeIndex);
+
+        // Call UpdateActuatorValuesFromKeyframe for this keyframe
+        UpdateActuatorValuesFromKeyframe(KeyframeNameFString);
+    }
+    if (FoundActors.Num() <= 0)
         return;
 
     for (int geom_id = 0; geom_id < model->ngeom; geom_id++) {
