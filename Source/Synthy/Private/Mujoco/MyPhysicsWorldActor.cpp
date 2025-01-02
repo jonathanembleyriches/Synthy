@@ -55,11 +55,14 @@ void AMyPhysicsWorldActor::EndPlay(const EEndPlayReason::Type EndPlayReason) {
     // TMap<int, PhysicsObject*> m_MJRobotVisToPhysicsObject;
     // TMap<int, PhysicsObject*> m_MJDynamicToPhysicsObject;
 }
+
 // Sets default values
 AMyPhysicsWorldActor::AMyPhysicsWorldActor() {
     PrimaryActorTick.bCanEverTick = true;
 }
-AMyPhysicsWorldActor::~AMyPhysicsWorldActor() {}
+
+AMyPhysicsWorldActor::~AMyPhysicsWorldActor() {
+}
 
 void GetMuJoCoContactData(const mjModel* m, const mjData* d, TArray<FVector>& ContactLocations, TArray<FVector>& ContactForces) {
     // Clear the arrays
@@ -87,6 +90,7 @@ void GetMuJoCoContactData(const mjModel* m, const mjData* d, TArray<FVector>& Co
         ContactForces.Add(Force);
     }
 }
+
 void VisualizeContactForces(UWorld* World, const TArray<FVector>& ContactLocations, const TArray<FVector>& ContactForces) {
     // Ensure the arrays are the same size
     if (ContactLocations.Num() != ContactForces.Num()) {
@@ -105,23 +109,24 @@ void VisualizeContactForces(UWorld* World, const TArray<FVector>& ContactLocatio
 
         // Draw the contact location as a sphere
         DrawDebugSphere(World, Location,
-                        1.0f,          // Sphere radius
-                        12,            // Number of segments
+                        1.0f, // Sphere radius
+                        12, // Number of segments
                         FColor::Green, // Color
-                        false,         // Persistent lines
-                        -1.0f          // Life time
-        );
+                        false, // Persistent lines
+                        -1.0f // Life time
+            );
 
         // Draw the force as a line
         DrawDebugLine(World, Location, Location + ScaledForce,
                       FColor::Red, // Color
-                      false,       // Persistent lines
-                      -1.0f,       // Life time
-                      0,           // Depth priority
-                      0.5f         // Thickness
-        );
+                      false, // Persistent lines
+                      -1.0f, // Life time
+                      0, // Depth priority
+                      0.5f // Thickness
+            );
     }
 }
+
 TArray<AActor*> GetAllActorsWithTag(UWorld* World, FName Tag) {
     TArray<AActor*> FoundActors;
     if (World) {
@@ -175,6 +180,7 @@ void AMyPhysicsWorldActor::ComputeMujocoUnrealSetup() {
         p->OffsetQuat = OffsetQuat;
     }
 }
+
 void AMyPhysicsWorldActor::SetupMJActors(TArray<AActor*> Actors, bool RobotPart, bool ComplexMeshRequired, bool Static) {
 
     for (auto Actor : Actors) {
@@ -234,7 +240,7 @@ void AMyPhysicsWorldActor::SetupMJActors(TArray<AActor*> Actors, bool RobotPart,
                     // 16-bit indices
                     const TArray<Chaos::TVector<uint16, 3>>& Indices =
                         TriMeshData[0].GetReference()->Elements().GetSmallIndexBuffer(); // 16-bit indices
-                                                                                         //
+                    //
                     MeshCount = MeshUtils::SaveMesh(FilePath, Vertices, Indices, ComplexMeshRequired);
                 }
             }
@@ -242,18 +248,18 @@ void AMyPhysicsWorldActor::SetupMJActors(TArray<AActor*> Actors, bool RobotPart,
             AMyPhysicsWorldActor::PhysicsObject NewPhysicsObject; // NewPhysicsObject.ObjectName = Actor->GetActorLabel();
             NewPhysicsObject.ObjectName = FString::Printf(
                 TEXT("%i"), Comp->GetUniqueID()); // Actor->GetRootComponent()->GetName();//Actor->GetActorNameOrLabel();
-            NewPhysicsObject.Actor = Actor;       // Initialize Actor to nullptr or valid actor
+            NewPhysicsObject.Actor = Actor; // Initialize Actor to nullptr or valid actor
             NewPhysicsObject.SceneComponent = Actor->GetRootComponent(); // Initialize Actor to nullptr or valid actor
             NewPhysicsObject.MeshComponent = SMC;
-            NewPhysicsObject.Transform = Actor->GetTransform();    // Initialize with default transform
+            NewPhysicsObject.Transform = Actor->GetTransform(); // Initialize with default transform
             NewPhysicsObject.Rotation = Actor->GetActorRotation(); // Initialize with default transform
-            NewPhysicsObject.Scale = Actor->GetActorScale3D();     // FVector(1.0f, 1.0f, 1.0f);    // Default scale
+            NewPhysicsObject.Scale = Actor->GetActorScale3D(); // FVector(1.0f, 1.0f, 1.0f);    // Default scale
             NewPhysicsObject.ObjectPathOrPrimitive = FilePath;
             NewPhysicsObject.SubObjectCount = MeshCount;
             NewPhysicsObject.Static = Static; // Set as static for now
             NewPhysicsObject.DrawDebug = true;
             NewPhysicsObject.RobotPart = RobotPart; // Set as static for now
-                                                    //
+            //
 
             if (!m_NameToPhysicsObject.Contains(NewPhysicsObject.ObjectName)) {
                 m_NameToPhysicsObject.Add(NewPhysicsObject.ObjectName, NewPhysicsObject);
@@ -315,7 +321,7 @@ void AMyPhysicsWorldActor::RunMujocoAsync() {
         while (true) // Keep running until manually stopped or object destroyed
         {
             FPlatformProcess::Sleep(IntervalInSeconds);
-            
+
             if (bShouldStopTask) {
                 bShouldStopTask = false;
                 break;
@@ -355,6 +361,7 @@ int find_keyframe_index(const mjModel* m, const char* key_name) {
     }
     return -1; // Not found
 }
+
 // Called when the game starts or when spawned
 void AMyPhysicsWorldActor::BeginPlay() {
     Super::BeginPlay();
@@ -457,6 +464,7 @@ void AMyPhysicsWorldActor::BeginPlay() {
     // socket.bind("tcp://127.0.0.1:5555");
     // socket.send(zmq::str_buffer("Hello, Unreal!"), zmq::send_flags::none);
 }
+
 void AMyPhysicsWorldActor::StopMJ() {
     bShouldStopTask = true;
 }
@@ -692,7 +700,8 @@ void AMyPhysicsWorldActor::DrawAllBodiesDebug() {
             p->Actor->SetActorRotation(GlobalQuatUE * LocalQuatUE.Inverse());
             p->Actor->SetActorLocation(Position + OffsetVector); // this is the working one for "static" geom
 
-            if (true) { // if (m_ShowMujDebug && p->DrawDebug) {
+            if (true) {
+                // if (m_ShowMujDebug && p->DrawDebug) {
                 float* vertices = model->mesh_vert + model->mesh_vertadr[meshId] * 3;
                 for (int j = 0; j < numFace; ++j) {
                     // Get the global vertex IDs of the convex hull face
@@ -742,6 +751,7 @@ void AMyPhysicsWorldActor::DrawAllBodiesDebug() {
         }
     }
 }
+
 void AMyPhysicsWorldActor::SyncMujBodyToUnreal(int body_id, PhysicsObject* p) {
     mjtNum* pos; //= &data->xpos[3 * bodyId];
     mjtNum* mat; // = &data->xmat[9 * bodyId];
@@ -763,7 +773,7 @@ void AMyPhysicsWorldActor::SyncMujBodyToUnreal(int body_id, PhysicsObject* p) {
     FQuat OffsetQuat = GlobalQuatUE * LocalQuatUE.Inverse();
     FVector OffsetVector = OffsetQuat.RotateVector(p->OffsetPos);
 
-    p->MeshComponent->SetWorldRotation(GlobalQuatUE);            // * LocalQuatUE.Inverse());
+    p->MeshComponent->SetWorldRotation(GlobalQuatUE); // * LocalQuatUE.Inverse());
     p->MeshComponent->SetWorldLocation(Position + OffsetVector); // this is the working one for "static" geom
     int geomId = id;
 
@@ -836,14 +846,15 @@ void AMyPhysicsWorldActor::Tick(float DeltaTime) {
 void AMyPhysicsWorldActor::BeginDestroy() {
     Super::BeginDestroy();
     if (m_RosManager != nullptr) {
-         delete m_RosManager;
-         m_RosManager = nullptr; // Prevent dangling pointer
+        delete m_RosManager;
+        m_RosManager = nullptr; // Prevent dangling pointer
     }
 }
 
 void AMyPhysicsWorldActor::SetupActuatorAddresses() {
     // Iterate through all actuators in the model
-    for (int i = 0; i < model->nu; i++) { // 'nu' is the number of actuators in the model
+    for (int i = 0; i < model->nu; i++) {
+        // 'nu' is the number of actuators in the model
         // Get the actuator name
         const char* actuator_name = mj_id2name(model, mjOBJ_ACTUATOR, i);
         int ac_addr = model->actuator_actadr[i];
@@ -859,7 +870,8 @@ void AMyPhysicsWorldActor::SetupActuatorAddresses() {
         int bodyId = model->jnt_bodyid[jointId];
 
         // Trace up to the highest parent body
-        while (model->body_parentid[bodyId] != 0) { // Stop at the world body (id = 0)
+        while (model->body_parentid[bodyId] != 0) {
+            // Stop at the world body (id = 0)
             bodyId = model->body_parentid[bodyId];
         }
 
@@ -921,7 +933,8 @@ void AMyPhysicsWorldActor::UpdateActuatorValuesFromKeyframe(const FString& keyfr
         int bodyId = model->jnt_bodyid[jointId];
 
         // Trace up to the highest parent body
-        while (model->body_parentid[bodyId] != 0) { // Stop at the world body (id = 0)
+        while (model->body_parentid[bodyId] != 0) {
+            // Stop at the world body (id = 0)
             bodyId = model->body_parentid[bodyId];
         }
 
@@ -951,7 +964,6 @@ void AMyPhysicsWorldActor::UpdateActuatorValuesFromKeyframe(const FString& keyfr
 }
 
 void AMyPhysicsWorldActor::SetupRobotMJtoUE() {
-
 
     TArray<AActor*> FoundActors;
     UGameplayStatics::GetAllActorsWithTag(m_World, FName("ROBOT"), FoundActors);
