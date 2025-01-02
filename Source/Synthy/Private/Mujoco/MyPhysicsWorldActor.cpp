@@ -1,6 +1,5 @@
 // Fill out your copyright notice in the Descr
 
-#include "Mujoco/MyPhysicsWorldActor.h"
 #include "AI/Navigation/NavCollisionBase.h"
 #include "Animation/AnimSequenceHelpers.h"
 #include "Async/Async.h"
@@ -23,6 +22,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Landscape.h" // Include this to work with ALandscape
 #include "Math/Float16Color.h"
+#include "Mujoco/MyPhysicsWorldActor.h"
 #include "PhysicsEngine/BodySetup.h"
 #include "PhysicsEngine/ConvexElem.h"
 #include "Runtime/CinematicCamera/Public/CineCameraComponent.h"
@@ -315,6 +315,8 @@ void AMyPhysicsWorldActor::RunMujocoAsync() {
         while (true) // Keep running until manually stopped or object destroyed
         {
             FPlatformProcess::Sleep(IntervalInSeconds);
+            if (m_PauseSim)
+                continue;
 
             if (m_JointControlEnabled) {
 
@@ -392,7 +394,8 @@ void AMyPhysicsWorldActor::BeginPlay() {
     ComputeMujocoUnrealSetup();
     SetupActuatorAddresses();
     SetupRobotMJtoUE();
-    // m_RosManager = new RosManager(model, data, &m_ActuatorValues);
+    m_RosManager = new RosManager(model, data, &m_ActuatorValues);
+    m_RosManager->SetupRos(GetGameInstance());
     // SetupRos("");
     DrawAllBodiesDebug();
 

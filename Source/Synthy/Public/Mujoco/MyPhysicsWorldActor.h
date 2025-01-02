@@ -99,6 +99,9 @@ public:
     bool m_ResetSim = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
+    bool m_PauseSim = false;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly)
     bool bRecreateMujoco=false;
     UPROPERTY(EditAnywhere, BlueprintReadOnly)
     TMap<FString, float> m_ActuatorValues;
