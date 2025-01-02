@@ -7,21 +7,9 @@
 #include "CoreMinimal.h"
 #include "Engine/Texture2D.h"
 #include "Engine/World.h"
-#include "EngineUtils.h"
 #include "GameFramework/Actor.h"
-#include "IImageWrapper.h"
-#include "IImageWrapperModule.h"
-#include "ImageUtils.h"
-#include "Kismet/GameplayStatics.h"
-#include "Landscape.h"
-#include "Landscape.h" // Include this to work with ALandscape
-#include "Landscape.h"
 #include "LandscapeComponent.h"
-#include "LandscapeDataAccess.h"
-#include "LandscapeDataAccess.h" // Ensure you include the relevant header
-#include "LandscapeHeightfieldCollisionComponent.h"
 #include "Utils/MJHelper.h"
-#include <fstream>
 #include "Coacd/CoacdInterface.h"
 
 namespace MeshUtils {
@@ -29,25 +17,6 @@ namespace MeshUtils {
 ALandscape* FindLandscapeActor(UWorld* World);
 MJHelper::HeightFieldData ExtractHeightmapAndSaveToMuJoCo(ALandscape* LandscapeActor, const FString& OutputFilePath,
                                                           const FString& PNGFilePath, const UWorld* World);
-//
-// int SaveMesh(const FString& FilePath, const Chaos::TArrayCollectionArray<Chaos::TVector<float, 3>>& Vertices, const TArray<Chaos::TVector<int, 3>>& Indices, bool ComplexMeshRequired);
-//
-// int SaveMeshAsOBJSimple(const FString& FilePath, const Chaos::TArrayCollectionArray<Chaos::TVector<float, 3>>& Vertices, const TArray<Chaos::TVector<int, 3>>& Indices);
-//
-// int SaveMeshAsOBJComplex(const FString& FilePath, const Chaos::TArrayCollectionArray<Chaos::TVector<float, 3>>& Vertices, const TArray<Chaos::TVector<int, 3>>& Indices); 
-
-
-// template <typename VertexType, typename IndexType>
-// int SaveMesh(const FString& FilePath, const Chaos::TArrayCollectionArray<VertexType>& Vertices,
-//              const TArray<Chaos::TVector<IndexType, 3>>& Indices, bool ComplexMeshRequired);
-//
-// template <typename VertexType, typename IndexType>
-// int SaveMeshAsOBJSimple(const FString& FilePath, const Chaos::TArrayCollectionArray<VertexType>& Vertices,
-//                         const TArray<Chaos::TVector<IndexType, 3>>& Indices);
-//
-// template <typename VertexType, typename IndexType>
-// int SaveMeshAsOBJComplex(const FString& FilePath, const Chaos::TArrayCollectionArray<VertexType>& Vertices,
-//                          const TArray<Chaos::TVector<IndexType, 3>>& Indices);
 template <typename VertexType, typename IndexType>
 int SaveMeshAsOBJSimple(const FString& FilePath, const Chaos::TArrayCollectionArray<VertexType>& Vertices,
                         const TArray<Chaos::TVector<IndexType, 3>>& Indices) {

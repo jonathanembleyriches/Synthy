@@ -3,7 +3,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "Kismet/GameplayStatics.h"
 #include <functional>
 #include <mujoco/mujoco.h>
 namespace MJHelper {
