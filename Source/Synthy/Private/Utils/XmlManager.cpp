@@ -1,5 +1,6 @@
 ﻿#include "Utils/XmlManager.h"
 #include "XmlParser.h"
+#include "Utils/SynthyLogging.h"
 
 XmlManager::XmlManager() {}
 void LogXmlNodeRecursive(const FXmlNode* Node, int32 IndentLevel = 0) {
@@ -10,17 +11,17 @@ void LogXmlNodeRecursive(const FXmlNode* Node, int32 IndentLevel = 0) {
     FString Indentation = FString(TEXT("")).RightPad(IndentLevel * 4);
 
     // Log the tag name
-    UE_LOG(LogTemp, Log, TEXT("%s<Tag>: %s"), *Indentation, *Node->GetTag());
+    UE_LOG(SynthyLog, Log, TEXT("%s<Tag>: %s"), *Indentation, *Node->GetTag());
 
     // Log all attributes without any special handling
     for (const auto& Attribute : Node->GetAttributes()) {
-        UE_LOG(LogTemp, Log, TEXT("%s  [Attribute] %s = %s"), *Indentation, *Attribute.GetTag(), *Attribute.GetValue());
+        UE_LOG(SynthyLog, Log, TEXT("%s  [Attribute] %s = %s"), *Indentation, *Attribute.GetTag(), *Attribute.GetValue());
     }
 
     // Log content if present
     FString Content = Node->GetContent();
     if (!Content.IsEmpty()) {
-        UE_LOG(LogTemp, Log, TEXT("%s  [Content]: %s"), *Indentation, *Content);
+        UE_LOG(SynthyLog, Log, TEXT("%s  [Content]: %s"), *Indentation, *Content);
     }
 
     // Recursively log all child nodes
@@ -67,14 +68,14 @@ void LogXmlFileData(const FString& FilePath) {
         FXmlFile XmlFile(XmlContent, EConstructMethod::ConstructFromBuffer);
 
         if (XmlFile.IsValid()) {
-            UE_LOG(LogTemp, Log, TEXT("Successfully loaded XML file: %s"), *FilePath);
+            UE_LOG(SynthyLog, Log, TEXT("Successfully loaded XML file: %s"), *FilePath);
             const FXmlNode* RootNode = XmlFile.GetRootNode();
             LogXmlNodeRecursive(RootNode);
         } else {
-            UE_LOG(LogTemp, Error, TEXT("Failed to parse XML file: %s"), *FilePath);
+            UE_LOG(SynthyLog, Error, TEXT("Failed to parse XML file: %s"), *FilePath);
         }
     } else {
-        UE_LOG(LogTemp, Error, TEXT("Failed to load XML file: %s"), *FilePath);
+        UE_LOG(SynthyLog, Error, TEXT("Failed to load XML file: %s"), *FilePath);
     }
 }
 void XmlManager::LoadXML() {
@@ -92,9 +93,9 @@ void XmlManager::LoadXML() {
     FString XmlContent;
 
     if (FFileHelper::LoadFileToString(XmlContent, *fp)) {
-        UE_LOG(LogTemp, Error, TEXT("%s"), *XmlContent);
+        UE_LOG(SynthyLog, Error, TEXT("%s"), *XmlContent);
     } else {
-        UE_LOG(LogTemp, Error, TEXT("Failed to load XML file."));
+        UE_LOG(SynthyLog, Error, TEXT("Failed to load XML file."));
     }
     LogXmlFileData(fp);
     WorldBodyNode = FindWorldBodyNode();
@@ -199,7 +200,7 @@ void XmlManager::UpdateXML(TMap<FString, TArray<AMyPhysicsWorldActor::PhysicsObj
                 }
             } else {
 
-                UE_LOG(LogTemp, Error, TEXT("%s already created "), *IDAssetName);
+                UE_LOG(SynthyLog, Error, TEXT("%s already created "), *IDAssetName);
             }
 
             // RotEuler= PhysicsObject.Transform.GetRotation().Euler();
@@ -265,9 +266,9 @@ FString XmlManager::GetFileAsString() {
     FString XmlContent;
 
     if (FFileHelper::LoadFileToString(XmlContent, *fp)) {
-        UE_LOG(LogTemp, Error, TEXT("%s"), *XmlContent);
+        UE_LOG(SynthyLog, Error, TEXT("%s"), *XmlContent);
     } else {
-        UE_LOG(LogTemp, Error, TEXT("Failed to load XML file."));
+        UE_LOG(SynthyLog, Error, TEXT("Failed to load XML file."));
     }
     return XmlContent;
 }

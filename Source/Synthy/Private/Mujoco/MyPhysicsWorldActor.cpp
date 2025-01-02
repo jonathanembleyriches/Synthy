@@ -33,6 +33,7 @@
 #include "coacd.h"
 #include "zmq.hpp"
 #include <mujoco/mujoco.h>
+#include <Utils/SynthyLogging.h>
 // #include "../src/logger.h"
 // #include "../src/preprocess.h"
 // #include "../src/process.h"
@@ -41,12 +42,12 @@ void AMyPhysicsWorldActor::EndPlay(const EEndPlayReason::Type EndPlayReason) {
 
     // Perform custom cleanup
     if (EndPlayReason == EEndPlayReason::Destroyed) {
-        UE_LOG(LogTemp, Warning, TEXT("Actor %s is being destroyed."), *GetName());
+        UE_LOG(SynthyLog, Warning, TEXT("Actor %s is being destroyed."), *GetName());
     }
 
     m_ResetSim = true;
     bShouldStopTask = true;
-    UE_LOG(LogTemp, Warning, TEXT("Actor %s EndPlay called with reason: %d"), *GetName(), (int32)EndPlayReason);
+    UE_LOG(SynthyLog, Warning, TEXT("Actor %s EndPlay called with reason: %d"), *GetName(), (int32)EndPlayReason);
 
     // TODO: we need to clean up the PhysicsObjects maps
     //
@@ -94,7 +95,7 @@ void GetMuJoCoContactData(const mjModel* m, const mjData* d, TArray<FVector>& Co
 void VisualizeContactForces(UWorld* World, const TArray<FVector>& ContactLocations, const TArray<FVector>& ContactForces) {
     // Ensure the arrays are the same size
     if (ContactLocations.Num() != ContactForces.Num()) {
-        UE_LOG(LogTemp, Error, TEXT("Contact locations and forces arrays are mismatched!"));
+        UE_LOG(SynthyLog, Error, TEXT("Contact locations and forces arrays are mismatched!"));
         return;
     }
 
@@ -365,7 +366,7 @@ int find_keyframe_index(const mjModel* m, const char* key_name) {
 // Called when the game starts or when spawned
 void AMyPhysicsWorldActor::BeginPlay() {
     Super::BeginPlay();
-
+    UE_LOG(SynthyLog, Log, TEXT("Mujoco Physics actor is setting up the scene."));
     UWorld* World = GetWorld();
     m_World = World;
 
@@ -648,7 +649,7 @@ void AMyPhysicsWorldActor::DrawAllBodiesDebug() {
                 model->geom_size[geomId * 3] * Multiplier, model->geom_size[geomId * 3 + 1] * Multiplier,
                 model->geom_size[geomId * 3 + 2] * Multiplier);
 
-            // UE_LOG(LogTemp, Warning, TEXT("Drawing box with half extents of %s with am ultiplier of %f"), *halfExtents.ToString(),
+            // UE_LOG(SynthyLog, Warning, TEXT("Drawing box with half extents of %s with am ultiplier of %f"), *halfExtents.ToString(),
             // Multiplier);
             DrawDebugBox(m_World, Position, halfExtents, GlobalQuatUE, FColor::Red, false, -1, 0, 0.3f);
             break;
@@ -665,11 +666,11 @@ void AMyPhysicsWorldActor::DrawAllBodiesDebug() {
 
             // if (p->Static)
             //     continue;
-            // UE_LOG(LogTemp, Warning, TEXT("Trying to debug draw %s"), *s);
+            // UE_LOG(SynthyLog, Warning, TEXT("Trying to debug draw %s"), *s);
             // Check if this mesh has a convex hull
             if (model->mesh_graphadr[meshId] == -1) {
 
-                // UE_LOG(LogTemp, Warning, TEXT("%s has no valid hull"), *s);
+                // UE_LOG(SynthyLog, Warning, TEXT("%s has no valid hull"), *s);
                 continue; // No convex hull data available for this mesh
             }
             // Access the convex hull data for the mesh
@@ -810,7 +811,7 @@ void AMyPhysicsWorldActor::SyncMujBodyToUnreal(int body_id, PhysicsObject* p) {
             model->geom_size[geomId * 3] * Multiplier, model->geom_size[geomId * 3 + 1] * Multiplier,
             model->geom_size[geomId * 3 + 2] * Multiplier);
 
-        // UE_LOG(LogTemp, Warning, TEXT("Drawing box with half extents of %s with am ultiplier of %f"), *halfExtents.ToString(),
+        // UE_LOG(SynthyLog, Warning, TEXT("Drawing box with half extents of %s with am ultiplier of %f"), *halfExtents.ToString(),
         // Multiplier);
         DrawDebugBox(m_World, Position, halfExtents, GlobalQuatUE, FColor::Red, false, -1, 0, 0.3f);
         break;
@@ -862,7 +863,7 @@ void AMyPhysicsWorldActor::SetupActuatorAddresses() {
         // Find the joint associated with the actuator
         int jointId = model->actuator_trnid[2 * i]; // First transmission ID
         if (jointId < 0) {
-            UE_LOG(LogTemp, Warning, TEXT("Actuator %s has no associated joint."), *FString(actuator_name));
+            UE_LOG(SynthyLog, Warning, TEXT("Actuator %s has no associated joint."), *FString(actuator_name));
             continue;
         }
 
@@ -882,7 +883,7 @@ void AMyPhysicsWorldActor::SetupActuatorAddresses() {
         FString CombinedName = FString(parent_body_name) + "/" + FString(actuator_name);
 
         // Log and store the combined name with its control index
-        UE_LOG(LogTemp, Warning, TEXT("Setting up actuator %s to id %i"), *CombinedName, ac_addr);
+        UE_LOG(SynthyLog, Warning, TEXT("Setting up actuator %s to id %i"), *CombinedName, ac_addr);
         m_ActuatorAddressesMap.Add(CombinedName, i);
         m_ActuatorValues.Add(CombinedName, 0.0f); // Initialize actuator control values to 0
     }
@@ -892,28 +893,28 @@ void AMyPhysicsWorldActor::SetupActuatorAddresses() {
 void AMyPhysicsWorldActor::UpdateActuatorValuesFromKeyframe(const FString& keyframeName) {
     // Check for a valid model
     if (!model) {
-        UE_LOG(LogTemp, Error, TEXT("MuJoCo model is null."));
+        UE_LOG(SynthyLog, Error, TEXT("MuJoCo model is null."));
         return;
     }
 
     // Extract the robot name from the keyframe name
     FString RobotName, KeyframeSuffix;
     if (!keyframeName.Split(TEXT("_"), &RobotName, &KeyframeSuffix)) {
-        UE_LOG(LogTemp, Error, TEXT("Invalid keyframe name format: '%s'. Expected 'robotname_suffix'."), *keyframeName);
+        UE_LOG(SynthyLog, Error, TEXT("Invalid keyframe name format: '%s'. Expected 'robotname_suffix'."), *keyframeName);
         return;
     }
 
     // Find the keyframe index
     int keyframeIndex = find_keyframe_index(model, TCHAR_TO_ANSI(*keyframeName));
     if (keyframeIndex == -1) {
-        UE_LOG(LogTemp, Error, TEXT("Keyframe '%s' not found."), *keyframeName);
+        UE_LOG(SynthyLog, Error, TEXT("Keyframe '%s' not found."), *keyframeName);
         return;
     }
 
     // Get the `ctrl` values from the keyframe
     const mjtNum* ctrl = model->key_ctrl + keyframeIndex * model->nu;
     if (model->nu <= 0) {
-        UE_LOG(LogTemp, Warning, TEXT("No actuators in the model."));
+        UE_LOG(SynthyLog, Warning, TEXT("No actuators in the model."));
         return;
     }
 
@@ -925,7 +926,7 @@ void AMyPhysicsWorldActor::UpdateActuatorValuesFromKeyframe(const FString& keyfr
         // Find the joint associated with the actuator
         int jointId = model->actuator_trnid[2 * i]; // First transmission ID
         if (jointId < 0) {
-            UE_LOG(LogTemp, Warning, TEXT("Actuator %s has no associated joint."), *FString(actuator_name));
+            UE_LOG(SynthyLog, Warning, TEXT("Actuator %s has no associated joint."), *FString(actuator_name));
             continue;
         }
 
@@ -955,10 +956,10 @@ void AMyPhysicsWorldActor::UpdateActuatorValuesFromKeyframe(const FString& keyfr
             m_ActuatorValues[CombinedName] = static_cast<float>(ctrl[i]);
 
             // Log the updated value
-            UE_LOG(LogTemp, Log, TEXT("Updated Actuator: %s -> Ctrl Value: %f"), *CombinedName, ctrl[i]);
+            UE_LOG(SynthyLog, Log, TEXT("Updated Actuator: %s -> Ctrl Value: %f"), *CombinedName, ctrl[i]);
         } else {
             // Log a warning if the actuator is not found in the map
-            UE_LOG(LogTemp, Warning, TEXT("Actuator '%s' not found in the map."), *CombinedName);
+            UE_LOG(SynthyLog, Warning, TEXT("Actuator '%s' not found in the map."), *CombinedName);
         }
     }
 }
@@ -966,14 +967,16 @@ void AMyPhysicsWorldActor::UpdateActuatorValuesFromKeyframe(const FString& keyfr
 void AMyPhysicsWorldActor::SetupRobotMJtoUE() {
 
     TArray<AActor*> FoundActors;
+
     UGameplayStatics::GetAllActorsWithTag(m_World, FName("ROBOT"), FoundActors);
+
     for (int keyframeIndex = 0; keyframeIndex < model->nkey; keyframeIndex++) {
         // Get the keyframe name
         const char* keyframeName = model->names + model->name_keyadr[keyframeIndex];
         FString KeyframeNameFString(keyframeName);
 
         // Log the keyframe name
-        UE_LOG(LogTemp, Log, TEXT("Keyframe found: %s (Index: %d)"), *KeyframeNameFString, keyframeIndex);
+        UE_LOG(SynthyLog, Log, TEXT("Keyframe found: %s (Index: %d)"), *KeyframeNameFString, keyframeIndex);
 
         // Call UpdateActuatorValuesFromKeyframe for this keyframe
         UpdateActuatorValuesFromKeyframe(KeyframeNameFString);
