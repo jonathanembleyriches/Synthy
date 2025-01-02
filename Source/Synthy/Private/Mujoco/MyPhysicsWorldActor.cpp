@@ -343,6 +343,16 @@ void AMyPhysicsWorldActor::RunMujocoAsync() {
         }
     });
 }
+int find_keyframe_index(const mjModel* m, const char* key_name) {
+    // Iterate over all keyframe names
+    for (int i = 0; i < m->nkey; i++) {
+        const char* name = m->names + m->name_keyadr[i];
+        if (strcmp(name, key_name) == 0) {
+            return i; // Found the keyframe
+        }
+    }
+    return -1; // Not found
+}
 // Called when the game starts or when spawned
 void AMyPhysicsWorldActor::BeginPlay() {
     Super::BeginPlay();
@@ -845,7 +855,44 @@ void AMyPhysicsWorldActor::SetupActuatorAddresses() {
         m_ActuatorValues.Add(FString(actuator_name), 0.0f); // Initialize actuator control values to 0
     }
 }
+void AMyPhysicsWorldActor::UpdateActuatorValuesFromKeyframe( const FString& keyframeName) {
+    // Check for a valid model
+    if (!model) {
+        UE_LOG(LogTemp, Error, TEXT("MuJoCo model is null."));
+        return;
+    }
 
+    // Find the keyframe index
+    int keyframeIndex = find_keyframe_index(model, TCHAR_TO_ANSI(*keyframeName));
+    if (keyframeIndex == -1) {
+        UE_LOG(LogTemp, Error, TEXT("Keyframe '%s' not found."), *keyframeName);
+        return;
+    }
+
+    // Get the `ctrl` values from the keyframe
+    const mjtNum* ctrl = model->key_ctrl + keyframeIndex * model->nu;
+    if (model->nu <= 0) {
+        UE_LOG(LogTemp, Warning, TEXT("No actuators in the model."));
+        return;
+    }
+
+    // Update the map with keyframe `ctrl` values
+    for (int i = 0; i < model->nu; i++) {
+        FString actuatorName = FString(model->names + model->name_actuatoradr[i]);
+
+        // Check if the actuator exists in the map
+        if (m_ActuatorValues.Contains(actuatorName)) {
+            // Update the value in the map
+            m_ActuatorValues[actuatorName] = static_cast<float>(ctrl[i]);
+
+            // Log the updated value
+            UE_LOG(LogTemp, Log, TEXT("Updated Actuator: %s -> Ctrl Value: %f"), *actuatorName, ctrl[i]);
+        } else {
+            // Log a warning if the actuator is not found in the map
+            UE_LOG(LogTemp, Warning, TEXT("Actuator '%s' not found in the map."), *actuatorName);
+        }
+    }
+}
 void AMyPhysicsWorldActor::SetupRobotMJtoUE() {
 
     UWorld* World = GetWorld();
@@ -853,6 +900,17 @@ void AMyPhysicsWorldActor::SetupRobotMJtoUE() {
     TArray<AActor*> FoundActors;
     AActor* RobotActorr = nullptr;
     UGameplayStatics::GetAllActorsWithTag(World, FName("ROBOT"), FoundActors);
+
+    int keyframe_index = find_keyframe_index(model, "home");
+    UE_LOG(LogTemp, Warning, TEXT("Keyframe id found %i"), keyframe_index)
+    const mjtNum* ctrl = model->key_ctrl + keyframe_index * model->nu;
+    if (model->nu > 0) {
+        for (int i = 0; i < model->nu; i++) {
+
+            UE_LOG(LogTemp, Warning, TEXT("ctrl values for ^ %f"), ctrl[i])
+        }
+    }
+        UpdateActuatorValuesFromKeyframe( "home");
 
     if (FoundActors.Num() > 0)
         RobotActorr = FoundActors[0];
