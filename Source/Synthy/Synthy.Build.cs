@@ -19,14 +19,14 @@ public
         });
 
         PublicDependencyModuleNames.AddRange(new string[]{
-            "Core", "XmlParser",
+            "Core", "XmlParser", "Engine",
             // ... add other public dependencies that you statically link with here ...
         });
 
         PrivateDependencyModuleNames.AddRange(new string[]{
             "CoreUObject", "Engine", "Slate", "SlateCore", "CinematicCamera", "ImageWrapper",
             //"UnrealEd",
-            "PhysicsCore", "Chaos", "XmlParser", "ROSIntegration", "CoACDInterface", "Landscape"
+            "PhysicsCore", "Chaos", "XmlParser", "ROSIntegration", "CoACDInterface", "Landscape", "RHI", "RenderCore"
             // ... add private dependencies that you statically link with here ...
         });
 

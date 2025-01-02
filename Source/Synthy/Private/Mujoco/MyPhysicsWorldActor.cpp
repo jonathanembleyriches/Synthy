@@ -458,7 +458,6 @@ void AMyPhysicsWorldActor::BeginPlay() {
     if (GoalActors.Num() > 0) {
         m_GoalActor = GoalActors[0];
     }
-
     // INFO: Testing of zmq
     // zmq::context_t context;
     // zmq::socket_t socket(context, zmq::socket_type::push);
