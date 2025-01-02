@@ -1,4 +1,15 @@
 #include "Utils/MeshUtils.h"
+
+#include "EngineUtils.h"
+#include "IImageWrapper.h"
+#include "IImageWrapperModule.h"
+#include "ImageUtils.h"
+#include "Kismet/GameplayStatics.h"
+#include "Landscape.h"
+#include <fstream>
+#include "LandscapeDataAccess.h"
+#include "LandscapeDataAccess.h" // Ensure you include the relevant header
+#include "LandscapeHeightfieldCollisionComponent.h"
 ALandscape* MeshUtils::FindLandscapeActor(UWorld* World) {
     if (!World) {
         UE_LOG(LogTemp, Warning, TEXT("World is null!"));

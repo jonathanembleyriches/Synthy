@@ -9,25 +9,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include <mujoco/mujoco.h>
-
 #include "Utils/MJHelper.h"
-#include "Utils/MeshUtils.h"
-#include "Kismet/GameplayStatics.h"
-#include "ROSIntegration/Classes/RI/Topic.h"
-#include "ROSIntegration/Classes/ROSIntegrationGameInstance.h"
-#include "ROSIntegration/Public/ROSTime.h"
-#include "ROSIntegration/Public/geometry_msgs/Point.h"
-#include "ROSIntegration/Public/geometry_msgs/Pose.h"
-#include "ROSIntegration/Public/sensor_msgs/Image.h"
-#include "ROSIntegration/Public/sensor_msgs/Imu.h"
-#include "ROSIntegration/Public/sensor_msgs/JointState.h"
-#include "ROSIntegration/Public/std_msgs/Float32MultiArray.h"
-
-// #include "coacd.h"
-// #include "model_obj.h"
-// #include "config.h"
-// #include "process.h"
-
 #include "MyPhysicsWorldActor.generated.h"
 
 UCLASS()
@@ -128,28 +110,6 @@ private:
     MJHelper::HeightFieldData HandleLandscapes();
 
 void UpdateActuatorValuesFromKeyframe( const FString& keyframeName) ;
-    // void SubCallback_JointState(TSharedPtr<FROSBaseMsg> Msg);
-    // void PublishJointState(TSharedPtr<ROSMessages::sensor_msgs::JointState> JointStateMsg, FROSTime RosTime);
-    // void PublishImu(TSharedPtr<ROSMessages::sensor_msgs::Imu> ImuMsg, FROSTime RosTime);
-    // void PublishContacts(TSharedPtr<ROSMessages::std_msgs::Float32MultiArray> Msg, FROSTime RosTime);
-    // void PublishCamera(const TArray<FColor>& OutBMP, uint32 Width, uint32 Height, FROSTime RosTime);
-    // void PublishDepth(const TArray<FFloat16Color>& DepthData, uint32 Width, uint32 Height, FROSTime RosTime);
-    // void SetupJointStateSub();
-    // void SetupGoalPosSub();
-    // void SetupPublishers();
-    // void SubCallback_StartPos(TSharedPtr<FROSBaseMsg> Msg);
-    // void SubCallback_GoalPos(TSharedPtr<FROSBaseMsg> Msg);
-    // void ReadAllSensorDataRos(TSharedPtr<ROSMessages::sensor_msgs::JointState> JointStateMsg,
-    //                           TSharedPtr<ROSMessages::sensor_msgs::Imu> ImuMsg,
-    //                           TSharedPtr<ROSMessages::std_msgs::Float32MultiArray> TouchForceMsg, FROSTime& ROSTime);
-    // void SetupStartPosSub();
-    //
-    // UFUNCTION(BlueprintCallable, Category = "ROS")
-    // void SetupRos(FString Addr);
-
-
-
-
     void RunMujocoAsync();
 
     void DrawAllBodiesDebug();
@@ -168,35 +128,7 @@ void UpdateActuatorValuesFromKeyframe( const FString& keyframeName) ;
     void SetupMJActors(TArray<AActor*> Actors, bool RobotPart, bool ComplexMeshRequired, bool Static);
 
 
-private: // ROS
-    //
-    // UPROPERTY()
-    // class UROSIntegrationGameInstance* ROSInst;
-    //
-    // UPROPERTY()
-    // UTopic* m_Topic_JointStateSub;
-    //
-    // UPROPERTY()
-    // UTopic* m_Topic_JointStatePub;
-    //
-    // UPROPERTY()
-    // UTopic* m_Topic_ImuPub;
-    //
-    // UPROPERTY()
-    // UTopic* m_Topic_CameraPub;
-    //
-    // UPROPERTY()
-    // UTopic* m_Topic_CameraDepthPub;
-    //
-    // UPROPERTY()
-    // UTopic* m_Topic_StartPosSub;
-    //
-    // UPROPERTY()
-    // UTopic* m_Topic_GoalPosSub;
-    //
-    // UPROPERTY()
-    // UTopic* m_Topic_ContactsPub;
-
+private: 
 
 private: // UE
     //
