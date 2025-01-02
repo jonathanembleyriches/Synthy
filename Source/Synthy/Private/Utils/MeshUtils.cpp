@@ -1,7 +1,8 @@
 #include "Utils/MeshUtils.h"
+#include "Utils/SynthyLogging.h"
 ALandscape* MeshUtils::FindLandscapeActor(UWorld* World) {
     if (!World) {
-        UE_LOG(LogTemp, Warning, TEXT("World is null!"));
+        UE_LOG(SynthyLog, Warning, TEXT("World is null!"));
         return nullptr;
     }
 
@@ -9,7 +10,7 @@ ALandscape* MeshUtils::FindLandscapeActor(UWorld* World) {
     for (TActorIterator<ALandscape> It(World); It; ++It) {
         ALandscape* Landscape = *It;
         if (Landscape) {
-            UE_LOG(LogTemp, Log, TEXT("Found a landscape actor: %s"), *Landscape->GetName());
+            UE_LOG(SynthyLog, Log, TEXT("Found a landscape actor: %s"), *Landscape->GetName());
             // Perform operations with the landscape actor
             return Landscape;
         }
@@ -21,7 +22,7 @@ MJHelper::HeightFieldData MeshUtils::ExtractHeightmapAndSaveToMuJoCo(ALandscape*
                                                 const UWorld* World) {
     MJHelper::HeightFieldData heightFieldData;
     if (!LandscapeActor) {
-        UE_LOG(LogTemp, Warning, TEXT("Landscape actor is null!"));
+        UE_LOG(SynthyLog, Warning, TEXT("Landscape actor is null!"));
         return heightFieldData;
     }
 
@@ -73,7 +74,7 @@ MJHelper::HeightFieldData MeshUtils::ExtractHeightmapAndSaveToMuJoCo(ALandscape*
         UTexture2D* HeightmapTexture = Component->GetHeightmap(false);
         UTexture2D* OffsetMapTexture = Component->XYOffsetmapTexture;
         if (!HeightmapTexture || !HeightmapTexture->Source.IsValid()) {
-            UE_LOG(LogTemp, Warning, TEXT("No valid heightmap texture or source for component: %s"), *Component->GetName());
+            UE_LOG(SynthyLog, Warning, TEXT("No valid heightmap texture or source for component: %s"), *Component->GetName());
             continue;
         }
 
@@ -82,7 +83,7 @@ MJHelper::HeightFieldData MeshUtils::ExtractHeightmapAndSaveToMuJoCo(ALandscape*
         int32 Height = HeightmapSource.GetSizeY();
 
         if (Width == 0 || Height == 0) {
-            UE_LOG(LogTemp, Warning, TEXT("Heightmap texture source has invalid dimensions for component: %s"), *Component->GetName());
+            UE_LOG(SynthyLog, Warning, TEXT("Heightmap texture source has invalid dimensions for component: %s"), *Component->GetName());
             continue;
         }
 
@@ -98,7 +99,7 @@ MJHelper::HeightFieldData MeshUtils::ExtractHeightmapAndSaveToMuJoCo(ALandscape*
 
         FColor* hmap_data = (FColor*)HeightmapSource.LockMip(0);
         if (!hmap_data) {
-            UE_LOG(LogTemp, Warning, TEXT("Failed to lock heightmap data for component: %s"), *Component->GetName());
+            UE_LOG(SynthyLog, Warning, TEXT("Failed to lock heightmap data for component: %s"), *Component->GetName());
             continue;
         }
 
@@ -113,7 +114,7 @@ MJHelper::HeightFieldData MeshUtils::ExtractHeightmapAndSaveToMuJoCo(ALandscape*
         heightFieldData.mjZPos = -(heightFieldData.mjHeight / 2) + (LandscapeActor->GetActorLocation().Z/100);
         heightFieldData.valid=true;
 
-        // UE_LOG(LogTemp, Log, TEXT("size = %i %i %i %i pos = %i %i %i"), mjXSize, mjYSize, mjHeight, mjHeight, mjXPos, mjYPos, mjZPos);
+        // UE_LOG(SynthyLog, Log, TEXT("size = %i %i %i %i pos = %i %i %i"), mjXSize, mjYSize, mjHeight, mjHeight, mjXPos, mjYPos, mjZPos);
 
         // wasA 5034000
         float ScaleOff = (OutSize.X) / (Height - 1);
@@ -147,7 +148,7 @@ MJHelper::HeightFieldData MeshUtils::ExtractHeightmapAndSaveToMuJoCo(ALandscape*
                 // DrawDebugPoint(World, PointPosition, 10.0f, FColor::Red, true, 9999, 0);
                 // if(X > 500 && Y > 500)
 
-                // UE_LOG(LogTemp, Log, TEXT("X: %i, Y: %i, %s"),X,Y,*PointPosition.ToString());
+                // UE_LOG(SynthyLog, Log, TEXT("X: %i, Y: %i, %s"),X,Y,*PointPosition.ToString());
                 // if(count < 1000000)
                 //     DrawDebugPoint(World, FVector(X, Y, Elevation) * 100.0f, 5.0f, FColor::Red, true, 9999, 0);
 
@@ -193,7 +194,7 @@ MJHelper::HeightFieldData MeshUtils::ExtractHeightmapAndSaveToMuJoCo(ALandscape*
 
     std::ofstream OutputFile(TCHAR_TO_UTF8(*OutputFilePath), std::ios::binary);
     if (!OutputFile) {
-        UE_LOG(LogTemp, Error, TEXT("Failed to open output file: %s"), *OutputFilePath);
+        UE_LOG(SynthyLog, Error, TEXT("Failed to open output file: %s"), *OutputFilePath);
         return heightFieldData;
     }
 
