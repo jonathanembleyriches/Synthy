@@ -127,6 +127,7 @@ private:
     void SetupCameras();
     MJHelper::HeightFieldData HandleLandscapes();
 
+void UpdateActuatorValuesFromKeyframe( const FString& keyframeName) ;
     // void SubCallback_JointState(TSharedPtr<FROSBaseMsg> Msg);
     // void PublishJointState(TSharedPtr<ROSMessages::sensor_msgs::JointState> JointStateMsg, FROSTime RosTime);
     // void PublishImu(TSharedPtr<ROSMessages::sensor_msgs::Imu> ImuMsg, FROSTime RosTime);

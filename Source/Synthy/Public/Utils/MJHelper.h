@@ -21,6 +21,5 @@ struct HeightFieldData {
 FQuat MJQuatToUE(mjtNum* MjQuat);
 
 FQuat MJQuatToUE(mjtNum* MjQuat, int Offset);
-
-
+// Function to find all actuators and their most parent body
 } // namespace MJHelper
